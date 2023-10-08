@@ -1,0 +1,23 @@
+digraph ProcessState {
+    not_started      [label="Not Started"]
+    starting         [label="Starting"]
+    loading_config   [label="Loading Config"]
+    started          [label="Started"]
+    stopping         [label="Stopping"]
+    force_stopping   [label="Force Stopping"]
+    exited           [label="Exited", color="red", fontcolor="red"]
+
+    exited         -> starting        [color="green"]
+    not_started    -> starting        [color="green"]
+    starting       -> exited          [color="red"]
+    starting       -> loading_config  [color="green"]
+    loading_config -> exited          [color="red"]
+    loading_config -> started         [color="green"]
+    started        -> exited          [color="red"]
+    started        -> stopping        [color="green"]
+    started        -> loading_config  [color="green"]
+    stopping       -> started         [color="red"]
+    stopping       -> not_started     [color="green"]
+    started        -> force_stopping  [color="green"]
+    force_stopping -> not_started     [color="green"]
+}
