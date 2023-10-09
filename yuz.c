@@ -1,31 +1,18 @@
-enum state_t {
-	PS_SHUTDOWN = 0,
-	PS_STARTED,
-	PS_LOADED,
-	PS_READY,
-	PS_CRASHED
-};
+#include <stdlib.h>
 
-typedef void *config_t;
+#include "process.h"
+#include "yuz.h"
 
-typedef struct {
-	enum state_t state;
-	config_t config;
-} process_t;
+void yuz_init(yuz_t *yuz) {
+	yuz->process_count = 0;
+	// TODO: make this dynamic
+	yuz->processes = malloc(sizeof(process_t) * MAX_PROCESSES);
+	for (int i = 0; i < MAX_PROCESSES; ++i) {
+		process_t *proc = yuz->processes + i;
+		yuz_process_init(yuz, proc);
+	}
+}
 
-void process_init(process_t *p);
-// TODO: is this really needed? if malloc is called yes it is.
-void process_deinit(process_t *p);
-void process_start(process_t *p);
-void process_load(process_t *p);
-void process_prepare(process_t *p);
-void process_stop(process_t *p);
-void process_force_stop(process_t *p);
-
-typedef struct {
-	process_t *p;
-} monitor_t;
-
-void monitor_start(monitor_t *m);
-void monitor_stop(monitor_t *m);
-
+void yuz_process_init(yuz_t *yuz, process_t *p) {
+	p->index = yuz->process_count++;
+}

@@ -6,7 +6,6 @@ digraph Process {
 	ready						[label="Ready", color="darkgreen", fontcolor="white", shape="box", style="filled", fontname="Ubuntu"]
 	crashed					[label="Crashed", color="crimson", fontcolor="white", shape="box", style="filled", fontname="Ubuntu"]
 
-
 	// process actions
 	start						[label="start", shape="diamond", style="filled", fontname="Ubuntu"]
 	load      			[label="load", shape="diamond", style="filled", fontname="Ubuntu"]
