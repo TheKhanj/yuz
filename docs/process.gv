@@ -1,0 +1,37 @@
+digraph Process {
+	// process states
+	shutdown				[label="Shutdown", shape="box", fontname="Ubuntu"]
+	started		 			[label="Started", shape="box", fontname="Ubuntu"]
+	loaded      		[label="Loaded", shape="box", fontname="Ubuntu"]
+	ready						[label="Ready", color="darkgreen", fontcolor="white", shape="box", style="filled", fontname="Ubuntu"]
+	crashed					[label="Crashed", color="crimson", fontcolor="white", shape="box", style="filled", fontname="Ubuntu"]
+
+
+	// process actions
+	start						[label="start", shape="diamond", style="filled", fontname="Ubuntu"]
+	load      			[label="load", shape="diamond", style="filled", fontname="Ubuntu"]
+	prepare					[label="prepare", shape="diamond", style="filled", fontname="Ubuntu"]
+	force_stop			[label="force_stop", shape="diamond", style="filled", fontname="Ubuntu"]
+	stop						[label="stop", shape="diamond", style="filled", fontname="Ubuntu"]
+	monitor					[label="monitor", shape="diamond", style="filled", fontname="Ubuntu"]
+
+	shutdown -> start
+	crashed -> start
+	start -> started
+	start -> crashed
+	started -> load
+	load -> crashed
+	load -> loaded
+	loaded -> prepare
+	prepare -> crashed
+	prepare -> ready
+	ready -> load
+	ready -> stop
+	ready -> monitor
+	monitor -> shutdown
+	monitor -> crashed
+	stop -> ready
+	stop -> shutdown
+	ready -> force_stop
+	force_stop -> shutdown
+}
