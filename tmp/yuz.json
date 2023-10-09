@@ -1,0 +1,27 @@
+{
+  "name": "my-project",
+  "alias": "mp",
+  "daemons": [
+    {
+      "name": "docker",
+      "description": "Docker Application Container Engine ",
+      "dependencies": {
+        "docker.socket": "*",
+        "docker.socket.2": {
+          "version": "*",
+          "required": true
+        },
+        "containerd": {
+          "version": "*",
+          "required": false
+        }
+      },
+      "states": {
+        "starting": {
+          "type": "exec",
+          "command": "/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock"
+        }
+      }
+    }
+  ]
+}

@@ -21,11 +21,13 @@ typedef struct process_methods_t {
 } process_methods_t;
 
 struct process_t {
-	uint index;
+	uint id;
 
 	enum state_t state;
 	char *command;
 	pid_t pid;
+
+	int recv_fd, send_fd;
 
 	process_methods_t methods;
 };

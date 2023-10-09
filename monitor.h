@@ -6,4 +6,3 @@ typedef struct {
 
 void monitor_start(monitor_t *m);
 void monitor_stop(monitor_t *m);
-
