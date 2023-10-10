@@ -8,29 +8,22 @@ digraph Process {
 
 	// process actions
 	start						[label="start", shape="diamond", style="filled", fontname="Ubuntu"]
-	load      			[label="load", shape="diamond", style="filled", fontname="Ubuntu"]
-	prepare					[label="prepare", shape="diamond", style="filled", fontname="Ubuntu"]
-	force_stop			[label="force_stop", shape="diamond", style="filled", fontname="Ubuntu"]
-	stop						[label="stop", shape="diamond", style="filled", fontname="Ubuntu"]
 	monitor					[label="monitor", shape="diamond", style="filled", fontname="Ubuntu"]
 
 	shutdown -> start
 	crashed -> start
 	start -> started
 	start -> crashed
-	started -> load
-	load -> crashed
-	load -> loaded
-	loaded -> prepare
-	prepare -> crashed
-	prepare -> ready
-	ready -> load
-	ready -> stop
+	started -> loaded
+	loaded -> ready
+
+	started -> monitor
+	loaded -> monitor
 	ready -> monitor
-	monitor -> shutdown
+
 	monitor -> crashed
-	stop -> ready
-	stop -> shutdown
-	ready -> force_stop
-	force_stop -> shutdown
+	monitor -> shutdown
+	monitor -> started
+	monitor -> loaded
+	monitor -> ready
 }
