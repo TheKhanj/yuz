@@ -1,58 +1,83 @@
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include "error.h"
 #include "process.h"
 
-void process_send_state(process_t *p, enum state_t state) {}
-
-void process_set_state(process_t *p, enum state_t state) {
+static void process_set_state(process_t *p, enum state_t state) {
 	p->state = state;
-	process_send_state(p, state);
 }
 
-static void release_parent_resources(process_t *p, error_t *err) {
+static void process_release_parent_resources(process_t *p, error_t *err) {
 	for (int fd = 3; fd < getdtablesize(); fd++) {
-		if (fd != p->recv_fd && fd != p->send_fd) {
-			if (close(fd) != -1) {
-				error_message(err, strerror(errno));
-				if (error_exist(err)) {
-					return;
-				}
-			}
+		if (fd == p->stdin_fd || fd == p->stdout_fd || fd == p->stderr_fd) {
+			continue;
+		}
+
+		if (close(fd) == -1) {
+			continue;
+		}
+
+		err->message = strerror(errno);
+
+		if (error_exist(err)) {
+			return;
 		}
 	}
 }
 
-static void release_child_resources(process_t *p, error_t *err) {
-	if (close(p->recv_fd) == -1 || close(p->send_fd) == -1) {
-		error_message(err, strerror(errno));
+static void process_redirect_std_streams(process_t *p, error_t *err) {
+	const int fds[] = {p->stdin_fd, p->stdout_fd, p->stderr_fd};
+
+	for (int i = 0; i < 3; i++) {
+		int fd = fds[i];
+		if (dup2(fd, i) == -1) {
+			err->message = strerror(errno);
+
+			return;
+		}
 	}
 }
 
-void process_fork(process_t *p, void (*child_action)(process_t *p),
-									error_t *err) {
-	p->pid = fork();
+void process_exec(process_t *p, error_t *err) {
+	pid_t pid;
+	pid = fork();
 
-	if (p->pid < 0) {
-		process_send_state(p, PS_CRASHED);
+	if (pid < 0) {
+		process_set_state(p, PS_CRASHED);
 		return;
 	}
 
-	process_set_state(p, PS_STARTED);
+	bool is_parent_process = pid != 0;
 
-	if (p->pid != 0) {
-		release_child_resources(p, err);
+	if (is_parent_process) {
+		process_set_state(p, PS_STARTED);
+		p->pid = pid;
+
 		return;
 	}
 
-	release_parent_resources(p, err);
+	process_redirect_std_streams(p, err);
+
 	if (error_exist(err)) {
-		return;
+		error_print(err);
+		exit(1);
 	}
 
-	child_action(p);
-}
+	process_release_parent_resources(p, err);
 
-void process_listen(process_t *p) {}
+	if (error_exist(err)) {
+		error_print(err);
+		exit(1);
+	}
+
+	if (execv(p->command, p->args) == -1) {
+		exit(1);
+	}
+
+	exit(0);
+}
