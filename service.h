@@ -23,8 +23,6 @@ typedef struct service_methods_t {
 } service_methods_t;
 
 struct service_t {
-	// TODO: not needed
-	uint id;
 	pid_t pid;
 
 	enum state_t state;

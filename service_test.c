@@ -11,7 +11,6 @@ void test_something() {
 	char *args[] = {"/usr/bin/sleep", "1", NULL};
 
 	service_t p = {
-			.id = 1,
 			.pid = -1,
 			.state = PS_SHUTDOWN,
 			.command = "/usr/bin/sleep",

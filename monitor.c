@@ -22,7 +22,7 @@ static void monitor_release_parent_resources(monitor_t *m) {}
 static size_t monitor_find_service_index(monitor_t *m, int pid) {
 	for (size_t i = 0; i < m->service_count; i++) {
 		service_t *p2 = m->services[i];
-		if (p2->id == pid) {
+		if (p2->pid == pid) {
 			return i;
 		}
 	}
@@ -41,7 +41,7 @@ void monitor_add_service(monitor_t *m, service_t *p) {
 
 // TODO: make this faster
 bool monitor_remove_service(monitor_t *m, service_t *p) {
-	size_t index = monitor_find_service_index(m, p->id);
+	size_t index = monitor_find_service_index(m, p->pid);
 
 	if (index >= m->service_count) {
 		return false;
