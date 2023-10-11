@@ -1,57 +1,81 @@
+#include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 #include "error.h"
 #include "monitor.h"
-#include "service.h"
 
-static void monitor_listen(monitor_t *m) {
-	int exit_code;
+static void release_child_resources(monitor_t *m) {}
 
-	while (true) {
-		int pid = waitpid(-1, &exit_code, 0);
+static void release_parent_resources(monitor_t *m, error_t *err) {
+	for (int fd = 3; fd < getdtablesize(); fd++) {
+		if (close(fd) != -1) {
+			continue;
+		}
+
+		err->message = strerror(errno);
+		return;
 	}
 }
 
-static void monitor_release_child_resources(monitor_t *m) {}
-
-static void monitor_release_parent_resources(monitor_t *m) {}
-
-static size_t monitor_find_service_index(monitor_t *m, int pid) {
-	for (size_t i = 0; i < m->service_count; i++) {
-		service_t *p2 = m->services[i];
-		if (p2->pid == pid) {
+static size_t find_pid_index(monitor_t *m, int pid) {
+	for (size_t i = 0; i < m->pids_count; i++) {
+		pid_t pid2 = m->pids[i];
+		if (pid2 == pid) {
 			return i;
 		}
 	}
 
-	return m->service_count;
+	return m->pids_count;
+}
+
+static void monitor_wait(monitor_t *m) {
+	int exit_code;
+
+	while (!m->should_shutdown) {
+		int pid = waitpid(-1, &exit_code, 0);
+		size_t index = find_pid_index(m, pid);
+
+		if (index >= m->pids_count) {
+			continue;
+		}
+
+		// TODO: update state here
+		printf("process with pid %d crashed with exit code %d\n", pid, exit_code);
+	}
 }
 
 void monitor_init(monitor_t *m) {
 	m->pid = -1;
-	m->service_count = 0;
+	m->should_shutdown = false;
+
+	m->pids_count = 0;
 }
 
-void monitor_add_service(monitor_t *m, service_t *p) {
-	m->services[m->service_count++] = p;
+// TODO: should only be called through IPC
+void monitor_add_service(monitor_t *m, pid_t pid) {
+	m->pids[m->pids_count++] = pid;
 }
 
 // TODO: make this faster
-bool monitor_remove_service(monitor_t *m, service_t *p) {
-	size_t index = monitor_find_service_index(m, p->pid);
+// TODO: should only be called through IPC
+bool monitor_remove_service(monitor_t *m, pid_t pid) {
+	size_t index = find_pid_index(m, pid);
 
-	if (index >= m->service_count) {
+	if (index >= m->pids_count) {
 		return false;
 	}
 
-	m->service_count--;
+	m->pids_count--;
 
 	// TODO: refactor to splice function
-	for (size_t i = index; i < m->service_count; ++i) {
-		m->services[i] = m->services[i + 1];
+	for (size_t i = index; i < m->pids_count; ++i) {
+		m->pids[i] = m->pids[i + 1];
 	}
 
 	return true;
@@ -68,10 +92,16 @@ void monitor_start(monitor_t *m, error_t *err) {
 	bool is_parent_service = m->pid != 0;
 
 	if (is_parent_service) {
-		monitor_release_child_resources(m);
+		release_child_resources(m);
 	} else {
-		monitor_release_parent_resources(m);
-		monitor_listen(m);
+		release_parent_resources(m, err);
+
+		if (error_exist(err)) {
+			error_print(err);
+			exit(1);
+		}
+
+		monitor_wait(m);
 	}
 }
 

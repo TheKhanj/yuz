@@ -1,8 +1,22 @@
+#include <stddef.h>
 #include <stdlib.h>
 
+#include "error.h"
 #include "service.h"
 #include "yuz.h"
 
-void yuz_init(yuz_t *yuz) { yuz->service_count = 0; }
+// TODO: use dfs algorithm
+void yuz_start(yuz_t *yuz) {
+	error_t err;
+	error_reset(&err);
 
-void yuz_add_process() {}
+	for (size_t i = 0; i < yuz->service_count; ++i) {
+		service_t *s = yuz->services + i;
+		service_exec(s, &err);
+
+		if (error_exist(&err)) {
+			error_print(&err);
+			exit(1);
+		}
+	}
+}

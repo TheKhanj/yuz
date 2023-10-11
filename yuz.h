@@ -11,7 +11,4 @@ typedef struct yuz_t {
 	service_t services[256];
 } yuz_t;
 
-void yuz_init(yuz_t *yuz);
-void yuz_service_init(yuz_t *yuz, service_t *p);
-
 #endif // YUZ__H
