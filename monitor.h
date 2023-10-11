@@ -16,9 +16,9 @@ typedef struct {
 } monitor_t;
 
 void monitor_init(monitor_t *m);
+void monitor_stop(monitor_t *m, error_t *err);
+void monitor_start(monitor_t *m, error_t *err);
 void monitor_add_service(monitor_t *m, service_t *p);
 bool monitor_remove_service(monitor_t *m, service_t *p);
-void monitor_start(monitor_t *m, error_t *err);
-void monitor_stop(monitor_t *m, error_t *err);
 
 #endif // MONITOR__H
