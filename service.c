@@ -6,13 +6,13 @@
 #include <unistd.h>
 
 #include "error.h"
-#include "process.h"
+#include "service.h"
 
-static void process_set_state(process_t *p, enum state_t state) {
+static void service_set_state(service_t *p, enum state_t state) {
 	p->state = state;
 }
 
-static void process_release_parent_resources(process_t *p, error_t *err) {
+static void service_release_parent_resources(service_t *p, error_t *err) {
 	for (int fd = 3; fd < getdtablesize(); fd++) {
 		if (fd == p->stdin_fd || fd == p->stdout_fd || fd == p->stderr_fd) {
 			continue;
@@ -30,7 +30,7 @@ static void process_release_parent_resources(process_t *p, error_t *err) {
 	}
 }
 
-static void process_redirect_std_streams(process_t *p, error_t *err) {
+static void service_redirect_std_streams(service_t *p, error_t *err) {
 	const int fds[] = {p->stdin_fd, p->stdout_fd, p->stderr_fd};
 
 	for (int i = 0; i < 3; i++) {
@@ -43,32 +43,32 @@ static void process_redirect_std_streams(process_t *p, error_t *err) {
 	}
 }
 
-void process_exec(process_t *p, error_t *err) {
+void service_exec(service_t *p, error_t *err) {
 	pid_t pid;
 	pid = fork();
 
 	if (pid < 0) {
-		process_set_state(p, PS_CRASHED);
+		service_set_state(p, PS_CRASHED);
 		return;
 	}
 
-	bool is_parent_process = pid != 0;
+	bool is_parent_service = pid != 0;
 
-	if (is_parent_process) {
-		process_set_state(p, PS_STARTED);
+	if (is_parent_service) {
+		service_set_state(p, PS_STARTED);
 		p->pid = pid;
 
 		return;
 	}
 
-	process_redirect_std_streams(p, err);
+	service_redirect_std_streams(p, err);
 
 	if (error_exist(err)) {
 		error_print(err);
 		exit(1);
 	}
 
-	process_release_parent_resources(p, err);
+	service_release_parent_resources(p, err);
 
 	if (error_exist(err)) {
 		error_print(err);

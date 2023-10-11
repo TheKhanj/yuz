@@ -5,7 +5,7 @@
 
 #include "error.h"
 #include "monitor.h"
-#include "process.h"
+#include "service.h"
 
 static void monitor_listen(monitor_t *m) {
 	int exit_code;
@@ -19,39 +19,39 @@ static void monitor_release_child_resources(monitor_t *m) {}
 
 static void monitor_release_parent_resources(monitor_t *m) {}
 
-static size_t monitor_find_process_index(monitor_t *m, int pid) {
-	for (size_t i = 0; i < m->process_count; i++) {
-		process_t *p2 = m->processes[i];
+static size_t monitor_find_service_index(monitor_t *m, int pid) {
+	for (size_t i = 0; i < m->service_count; i++) {
+		service_t *p2 = m->services[i];
 		if (p2->id == pid) {
 			return i;
 		}
 	}
 
-	return m->process_count;
+	return m->service_count;
 }
 
 void monitor_init(monitor_t *m) {
 	m->pid = -1;
-	m->process_count = 0;
+	m->service_count = 0;
 }
 
-void monitor_add_process(monitor_t *m, process_t *p) {
-	m->processes[m->process_count++] = p;
+void monitor_add_service(monitor_t *m, service_t *p) {
+	m->services[m->service_count++] = p;
 }
 
 // TODO: make this faster
-bool monitor_remove_process(monitor_t *m, process_t *p) {
-	size_t index = monitor_find_process_index(m, p->id);
+bool monitor_remove_service(monitor_t *m, service_t *p) {
+	size_t index = monitor_find_service_index(m, p->id);
 
-	if (index >= m->process_count) {
+	if (index >= m->service_count) {
 		return false;
 	}
 
-	m->process_count--;
+	m->service_count--;
 
 	// TODO: refactor to splice function
-	for (size_t i = index; i < m->process_count; ++i) {
-		m->processes[i] = m->processes[i + 1];
+	for (size_t i = index; i < m->service_count; ++i) {
+		m->services[i] = m->services[i + 1];
 	}
 
 	return true;
@@ -65,11 +65,10 @@ void monitor_start(monitor_t *m, error_t *err) {
 		return;
 	}
 
-	bool is_parent_process = m->pid != 0;
+	bool is_parent_service = m->pid != 0;
 
-	if (is_parent_process) {
+	if (is_parent_service) {
 		monitor_release_child_resources(m);
-
 	} else {
 		monitor_release_parent_resources(m);
 		monitor_listen(m);

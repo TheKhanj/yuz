@@ -5,12 +5,12 @@
 #include <unistd.h>
 
 #include "error.h"
-#include "process.h"
+#include "service.h"
 
 void test_something() {
 	char *args[] = {"/usr/bin/sleep", "1", NULL};
 
-	process_t p = {
+	service_t p = {
 			.id = 1,
 			.pid = -1,
 			.state = PS_SHUTDOWN,
@@ -23,7 +23,7 @@ void test_something() {
 
 	error_t err;
 	error_reset(&err);
-	process_exec(&p, &err);
+	service_exec(&p, &err);
 	int exit_code;
 	close(0);
 	close(1);
